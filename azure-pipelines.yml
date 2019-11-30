@@ -1,0 +1,93 @@
+trigger:
+- master
+
+variables:
+- group: 'Firebase'
+- name: vmImageName
+  value: 'ubuntu-latest'
+- name: npm_config_cache
+  value: '$(Pipeline.Workspace)/.npm'
+
+stages:
+
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - template: azure-pipelines/prepare-tasks.yml
+    - script: ng build --prod
+      displayName: 'Build'
+    - publish: '$(Build.SourcesDirectory)'
+      artifact: drop
+      displayName: 'Publish artifact'
+  - job: Test
+    displayName: Test
+    steps:
+    - template: azure-pipelines/prepare-tasks.yml
+    - script: ng test --watch=false --browsers=ChromeHeadless --code-coverage=true
+      displayName: 'Run unit tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/TESTS-*.xml'
+      displayName: 'Publish test results'
+    - task: PublishCodeCoverageResults@1
+      condition: succeededOrFailed()
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '$(Build.SourcesDirectory)/coverage/MenuAtHome/cobertura-coverage.xml'
+      displayName: 'Publish code coverage results'
+  - template: azure-pipelines/deploy-jobs.yml
+    parameters:
+      dependsOn: [Build, Test]
+      environmentName: Dev
+      firebaseProject: $(FIREBASE_PROJECT_DEV)
+
+- stage: Testing
+  displayName: Testing stage
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: Test
+    displayName: Test
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - template: azure-pipelines/prepare-tasks.yml
+    - script: |
+        trap '[ -n "$pid" ] && kill $pid' EXIT
+        npx firebase serve --token $(FIREBASE_TOKEN) --project $(FIREBASE_PROJECT_DEV) &
+        pid="$!"
+        sleep 5
+        ng e2e
+      displayName: 'Run end-to-end tests'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/TESTS-*.xml'
+      displayName: 'Publish test results'
+    - script: ng lint
+      displayName: 'Code analysis'
+    - task: BuildQualityChecks@6
+      inputs:
+        checkWarnings: true
+        warningFailOption: 'build'
+        checkCoverage: true
+        coverageFailOption: 'build'
+        coverageType: 'blocks'
+
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Testing
+  condition: succeeded()
+  jobs:
+  - template: azure-pipelines/deploy-jobs.yml
+    parameters:
+      environmentName: Prod
+      firebaseProject: $(FIREBASE_PROJECT_PROD)

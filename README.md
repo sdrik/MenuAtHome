@@ -1,3 +1,5 @@
+[![Build Status](https://dev.azure.com/sdrik/MenuAtHome/_apis/build/status/sdrik.MenuAtHome?branchName=master)](https://dev.azure.com/sdrik/MenuAtHome/_build/latest?definitionId=1&branchName=master)
+
 # MenuAtHome
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 8.3.20.

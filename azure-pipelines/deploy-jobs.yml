@@ -1,0 +1,20 @@
+parameters:
+  environmentName: ''
+  firebaseProject: ''
+  dependsOn: []
+  vmImageName: $(vmImageName)
+
+jobs:
+- deployment: Deploy${{ parameters.environmentName }}
+  dependsOn: ${{ parameters.dependsOn }}
+  displayName: Deploy to ${{ parameters.environmentName }} environment
+  environment: ${{ parameters.environmentName }}
+  pool:
+    vmImage: ${{ parameters.vmImageName }}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - template: deploy-tasks.yml
+          parameters:
+            firebaseProject: ${{ parameters.firebaseProject }}

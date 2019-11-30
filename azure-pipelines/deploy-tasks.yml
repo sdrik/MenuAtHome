@@ -1,0 +1,16 @@
+parameters:
+  firebaseProject: ''
+
+steps:
+- download: current
+  artifact: drop
+- task: NodeTool@0
+  inputs:
+    versionSpec: '10.x'
+  displayName: 'Install Node.js'
+- script: |
+    cd $(Pipeline.Workspace)/drop
+    npm install -g firebase-tools
+    firebase target:apply hosting MenuAtHome ${{ parameters.firebaseProject }} --token $(FIREBASE_TOKEN) --project ${{ parameters.firebaseProject }}
+    firebase deploy --token $(FIREBASE_TOKEN) --project ${{ parameters.firebaseProject }}
+  displayName: 'Deploy to Firebase'

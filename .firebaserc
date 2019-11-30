@@ -1,0 +1,18 @@
+{
+  "targets": {
+    "menu-at-home": {
+      "hosting": {
+        "MenuAtHome": [
+          "menu-at-home"
+        ]
+      }
+    },
+    "menu-at-home-dev": {
+      "hosting": {
+        "MenuAtHome": [
+          "menu-at-home-dev"
+        ]
+      }
+    }
+  }
+}

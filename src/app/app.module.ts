@@ -1,8 +1,9 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, APP_INITIALIZER } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { ConfigService } from './config.service';
 
 @NgModule({
   declarations: [
@@ -12,7 +13,10 @@ import { AppComponent } from './app.component';
     BrowserModule,
     AppRoutingModule
   ],
-  providers: [],
+  providers: [
+    ConfigService,
+    { provide: APP_INITIALIZER, useFactory: (cs: ConfigService) => () => cs.load(), deps: [ConfigService], multi: true },
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
